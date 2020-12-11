@@ -5,7 +5,7 @@ Torchun Infra repository
 
 > Accessing isolated server with single ssh command
 
-bastion_IP = 178.154.247.170
+bastion_IP = 178.154.247.170<br>
 someinternalhost_IP = 10.130.0.23
 
 ##### Solution 1 (simple way): chained ssh
