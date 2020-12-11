@@ -59,6 +59,6 @@ All other stuff as described in homework.pdf
 
 > Add ssl cert to prevent "untrusted" error
 #### Solution
-Go to https://sslip.io/ and check default DNS for IP: `dig +short 178-154-247-170.sslip.io`
-Go to `178-154-247-170.sslip.io` -> Settings -> Let's Encrypt Domain: enter here your default DNS: "178-154-247-170.sslip.io"
+Go to https://sslip.io/ and check default DNS for IP: `dig +short 178-154-247-170.sslip.io`<br>
+Go to `178-154-247-170.sslip.io` -> Settings -> Let's Encrypt Domain: enter here your default DNS: "178-154-247-170.sslip.io"<br>
 Done!
