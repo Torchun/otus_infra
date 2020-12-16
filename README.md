@@ -63,3 +63,16 @@ All other stuff as described in homework.pdf
 Go to https://sslip.io/ and check default DNS for IP: `dig +short 178-154-247-170.sslip.io`<br>
 Go to `178-154-247-170.sslip.io` -> Settings -> Let's Encrypt Domain: enter here your default DNS: "178-154-247-170.sslip.io"<br>
 Done!
+
+
+### Lecture 6, homework 4
+
+> Create ya.cloud VM with "yc" and deploy test app in it
+
+testapp_IP = 178.154.247.170
+
+testapp_port = 9292
+
+##### Solution
+@ local machine:
+  - ``
