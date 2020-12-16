@@ -1,0 +1,20 @@
+#cloud-config
+users:
+  - name: yc-user
+    shell: /bin/bash
+    groups: sudo
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC3WSxKqVw0BxrGuFsnwrZoWVNN03p6Z0X44J0N56/bZt0wXw/wn6k2wMEi8W+oGv6+nmC/ss923FMUO9PGB9YYW6nmI/nRy6j0SK6MTPnebEqfcIJw4vYPSQtgLzhOjdpEpBr4p2sm0ryK7hrEvsqKlX4bs2uPvgCT3jhPWd6Wyi/B6175AjkXP0jqMedL/0EID3pnmsbAdQJeMHDASQKvA1J5qpI7HKoAeP/wdRB7yU8Er5s0Yr6Z50dXeiZfMzyloU1JQSxXhIg9c+3NiyFjMTRSYLWyn3owZG6eW7ePR+OW02NSIt0eR+AKBSizKJRFK4p6h7wW+TkB5FDuUcRp34+vHr14aVbwZQUV3PJYbpRaecqTe70LqCHDJB2zQzUU/IbW5UdpF3yAXGrB9RkxfVQ9vHgSaHbNLIrtXz7tiLecBjdbWUAW74S9lGpcmkL7IkBFvUD2FhFkwm4jQpkWrfSL6RuccMUbS1uaAeVc1m1M5Hg1XSzE+a9CSnH6KefJ8y6Xw1uodj9o7Xot7ZCndRhetHsynYDa5nXPAiFYkgK/gIiqF36QN8MjebGtZByGCMxfPSZtLvneNtfqnzr9pLv2FWc4+d5ncZ9pWDjTtv8O/Vrp4ykgH9oTrjAuSaHzWhg2Zgb5/uPRFlYrIEa9NJZaJLFGf7hVREVsQypanQ== appuser
+runcmd:
+  - su yc-user -c 'sudo apt update && echo "[1/7] System updated" | wall'
+  - su yc-user -c 'wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -'
+  - su yc-user -c 'echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list'
+  - su yc-user -c 'sudo apt update && echo "[2/7] MongoDB repo added" | wall'
+  - su yc-user -c 'sudo apt install -y ruby-full ruby-bundler build-essential mongodb-org git && echo "[3/7] ruby, bundler, MongoDB and deps installed" | wall'
+  - su yc-user -c 'sudo systemctl start mongod'
+  - su yc-user -c 'sudo systemctl enable mongod && echo "[4/7] MongoDB started" | wall'
+  - su yc-user -c 'cd ~ && git clone -b monolith https://github.com/express42/reddit.git && echo "[5/7] Reddit app cloned" | wall'
+  - su yc-user -c 'cd ~/reddit && bundle install && echo "[6/7] Reddit app installed" | wall'
+  - su yc-user -c 'cd ~/reddit && puma -d && echo "[7/7] puma server started, check http://ip:9292/" | wall'
+  - echo "Cloud-init completed." | wall

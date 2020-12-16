@@ -69,10 +69,26 @@ Done!
 
 > Create ya.cloud VM with "yc" and deploy test app in it
 
-testapp_IP = 178.154.247.170
+testapp_IP = 178.154.246.67
 
 testapp_port = 9292
 
 ##### Solution
-@ local machine:
-  - ``
+@ local machine: as in pdf.
+
+> create startup script to be executed on initial startup
+
+##### Solution: use cloud-init script (yaml)
+Examples shown in video. Additional info: https://www.digitalocean.com/community/tutorials/how-to-use-cloud-config-for-your-initial-server-setup
+  - create yaml file with needed config, e.g. `metadata.yaml`
+  - pass it while creating VM via `yc` command:
+```
+yc compute instance create \
+  --name reddit-app \
+  --hostname reddit-app \
+  --memory=4 \
+  --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-1604-lts,size=10GB \
+  --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4 \
+  --metadata serial-port-enable=1 \
+  --metadata-from-file user-data=metadata.yaml
+```
