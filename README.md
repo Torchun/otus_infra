@@ -69,7 +69,7 @@ Done!
 
 > Create ya.cloud VM with "yc" and deploy test app in it
 
-testapp_IP = 178.154.246.67
+testapp_IP = 178.154.246.238
 
 testapp_port = 9292
 
