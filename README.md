@@ -138,7 +138,7 @@ Create `ubuntu16.json`:
         {
             "type": "yandex",
             "service_account_key_file": "/full/path/to/secrets/yc/key.json",
-            "folder_id": "b1gke8b3gh5mjbpt1qsr",
+            "folder_id": "aaaabbbbccccdddd",
             "source_image_family": "ubuntu-1604-lts",
             "image_name": "reddit-base-{{timestamp}}",
             "image_family": "reddit-base",
@@ -192,8 +192,8 @@ instance has no one IPv4 external address
     "builders": [
         {
             "type": "yandex",
-            "service_account_key_file": "/home/pbedyaev/secrets/yc/key.json",
-            "folder_id": "b1gke8b3gh5mjbpt1qsr",
+            "service_account_key_file": "/full/path/to/secrets/yc/key.json",
+            "folder_id": "aaaabbbbccccdddd",
             "source_image_family": "ubuntu-1604-lts",
             "image_name": "reddit-base-{{timestamp}}",
             "image_family": "reddit-base",
@@ -287,4 +287,54 @@ puma -d
 Then go to public IP:9292 and check web availability.
 
 > Packer template for User Variables (variables.json): folder_id, source_image_family, service_account_key_file.
+##### Solution:
+Create variables.json and add mentioned variables:
+```
+{
+  "folder_id": "aaaabbbbccccdddd",
+  "source_image_family": "ubuntu-1604-lts",
+  "service_account_key_file": "/full/path/to/secrets/yc/key.json",
+  "disk_name": "reddit-fried",
+  "disk_size_gb": "21"
+}
+```
+And use it in `ubuntu16.json`:
+```
+{
+    "builders": [
+        {
+            "type": "yandex",
+            "service_account_key_file": "{{ user `service_account_key_file` }}",
+            "folder_id": "{{ user `folder_id` }}",
+            "source_image_family": "{{ user `source_image_family`}}",
+            "image_name": "reddit-base-{{timestamp}}",
+            "image_family": "reddit-base",
+            "ssh_username": "ubuntu",
+            "use_ipv4_nat": "true",
+            "platform_id": "standard-v1",
+            "disk_name": "{{ user `disk_name` }}",
+            "disk_size_gb": "{{ user `disk_size_gb` }}"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "script": "scripts/install_ruby.sh",
+            "execute_command": "sudo {{.Path}}"
+        },
+        {
+            "type": "shell",
+            "script": "scripts/install_mongodb.sh",
+            "execute_command": "sudo {{.Path}}"
+        }
+    ]
+}
+```
+Now check & build (don't forget to remove all networks):
+```
+packer validate -var-file=./variables.json ./ubuntu16.json
+packer build -var-file=./variables.json ./ubuntu16.json
+```
+
+> Build "baked" image with prepared app auto-start.
 ##### Solution:

@@ -9,7 +9,9 @@
             "image_family": "reddit-base",
             "ssh_username": "ubuntu",
             "use_ipv4_nat": "true",
-            "platform_id": "standard-v1"
+            "platform_id": "standard-v1",
+            "disk_name": "{{ user `disk_name` }}",
+            "disk_size_gb": "{{ user `disk_size_gb` }}"
         }
     ],
     "provisioners": [
