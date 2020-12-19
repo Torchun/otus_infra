@@ -338,3 +338,60 @@ packer build -var-file=./variables.json ./ubuntu16.json
 
 > Build "baked" image with prepared app auto-start.
 ##### Solution:
+Need to make *.json with provisioners -> set up and copy config file -> systemd unit -> autostart app like a service on startup.
+1. Translate content of deploy.sh into immutable.json (copied from ubuntu16.json) to `privisioners` section:
+```
+#!/usr/bin/env bash
+sudo apt install -y git
+cd ~
+git clone -b monolith https://github.com/express42/reddit.git
+cd reddit && bundle install
+puma -d
+ps aux | grep puma
+echo "Check http://PUBLIC_IP:9292/"
+
+```
+2. Create [puma.service file](https://github.com/puma/puma/blob/master/docs/systemd.md):
+```
+[Unit]
+Description=Puma
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/server/reddit
+ExecStart=/usr/local/bin/puma
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+```
+Add [file provisioner](https://www.packer.io/docs/provisioners/file):
+```
+{
+  "type": "file",
+  "source": "files/puma.service",
+  "destination": "/tmp/puma.service"
+}
+```
+3. Need to use [inline provisioner](https://www.packer.io/docs/provisioners/shell):
+```
+{
+    "type": "shell",
+    "inline": [
+        "sudo mv /tmp/puma.service /etc/systemd/system/puma.service",
+        "sudo apt update && sudo apt install -y git",
+        "sudo mkdir -p /server",
+        "sudo chown -R $USER:$USER /server && cd $_",
+        "git clone -b monolith https://github.com/express42/reddit.git /server",
+        "cd /server/reddit && bundle install",
+        "sudo systemctl daemon-reload && sudo systemctl start puma && sudo systemctl enable puma"
+    ]
+}
+```
+4. Validate & build:
+```
+packer validate -var-file=./variables.json ./immutable.json
+packer build -var-file=./variables.json ./immutable.json
+```
