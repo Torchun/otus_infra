@@ -1,0 +1,54 @@
+{
+    "builders": [
+        {
+            "type": "yandex",
+            "service_account_key_file": "{{ user `service_account_key_file` }}",
+            "folder_id": "{{ user `folder_id` }}",
+            "source_image_family": "{{ user `source_image_family`}}",
+            "image_name": "reddit-full-{{timestamp}}",
+            "image_family": "reddit-full",
+            "ssh_username": "ubuntu",
+            "use_ipv4_nat": "true",
+            "platform_id": "standard-v1",
+            "disk_name": "reddit-full",
+            "disk_size_gb": "{{ user `disk_size_gb` }}"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+		"echo 'Waiting while unattended upgrades will do their daily work (triggered right after VM start'",
+		"sleep 30",
+		"sudo ps -ef | grep -i apt"
+	    ]
+        },
+        {
+            "type": "shell",
+            "script": "scripts/install_ruby.sh",
+            "execute_command": "sudo {{.Path}}"
+        },
+        {
+            "type": "shell",
+            "script": "scripts/install_mongodb.sh",
+            "execute_command": "sudo {{.Path}}"
+        },
+        {
+	    "type": "file",
+	    "source": "files/puma.service",
+	    "destination": "/tmp/puma.service"
+	},
+        {
+            "type": "shell",
+            "inline": [
+		"sudo mv /tmp/puma.service /etc/systemd/system/puma.service",
+		"sudo apt update && sudo apt install -y git",
+		"sudo mkdir -p /server",
+		"sudo chmod 777 /server && cd /server",
+		"git clone -b monolith https://github.com/express42/reddit.git",
+		"cd /server/reddit && bundle install",
+		"sudo systemctl daemon-reload && sudo systemctl start puma && sudo systemctl enable puma"
+	    ]
+        }
+    ]
+}
