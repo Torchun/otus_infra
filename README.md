@@ -1,7 +1,7 @@
 # Torchun_infra
 Torchun Infra repository
 
-### Lecture 5, homework 3
+# Lecture 5, homework 3
 
 > Accessing isolated server with single ssh command
 
@@ -65,7 +65,7 @@ Go to `178-154-247-170.sslip.io` -> Settings -> Let's Encrypt Domain: enter here
 Done!
 
 
-### Lecture 6, homework 4
+# Lecture 6, homework 4
 
 > Create ya.cloud VM with "yc" and deploy test app in it
 
@@ -92,3 +92,199 @@ yc compute instance create \
   --metadata serial-port-enable=1 \
   --metadata-from-file user-data=./metadata.yaml
 ```
+
+# Lecture 7 homework 5
+> Making "Backed" image @ yandex.cloud with Packer.
+##### Perform following steps:
+Create service account @ yandex.cloud: \
+`yc iam service-account create --name $SVC_ACCT --folder-id $FOLDER_ID`
+
+Get account_id to variable: \
+`ACCT_ID=$(yc iam service-account get $SVC_ACCT | grep ^id | awk '{print $2}')`
+
+Give "editor" role to service account: \
+`yc resource-manager folder add-access-binding --id $FOLDER_ID --role editor --service-account-id $ACCT_ID`\
+
+Create key for service_account and store locally: \
+`yc iam key create --service-account-id $ACCT_ID --output ~/secrets/yc/key.json`
+
+Create two scripts to customize initial image:
+ - `install_ruby.sh`
+```
+#!/usr/bin/env bash
+apt update
+apt install -y ruby-full ruby-bundler build-essential
+```
+ - `install_mongodb.sh`
+```
+#!/usr/bin/env bash
+apt-get update
+apt-get install apt-transport-https ca-certificates
+wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.2 multiverse" \
+| sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list
+apt-get update
+apt-get install -y mongodb-org
+systemctl start mongod
+systemctl enable mongod
+systemctl status mongod --no-pager
+
+```
+
+Create `ubuntu16.json`:
+```
+{
+    "builders": [
+        {
+            "type": "yandex",
+            "service_account_key_file": "/full/path/to/secrets/yc/key.json",
+            "folder_id": "b1gke8b3gh5mjbpt1qsr",
+            "source_image_family": "ubuntu-1604-lts",
+            "image_name": "reddit-base-{{timestamp}}",
+            "image_family": "reddit-base",
+            "ssh_username": "ubuntu",
+            "platform_id": "standard-v1"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "script": "scripts/install_ruby.sh",
+            "execute_command": "sudo {{.Path}}"
+        },
+        {
+            "type": "shell",
+            "script": "scripts/install_mongodb.sh",
+            "execute_command": "sudo {{.Path}}"
+        }
+    ]
+}
+```
+Check if *<packer>*.json is correct: \
+`packer validate ./ubuntu16.json`
+
+And try to build image: \
+`packer build ./ubuntu16.json `
+
+#### Issue #1.
+```
+==> yandex: Error creating network: server-request-id = c035e0f4-e960-b8bf-a4b0
+-c5bd61dc085b server-trace-id = 773200f7367e6ec5:ddfd944c93fa0f96:773200f7367e6
+ec5:1 client-request-id = cd3ae657-fdc2-45d1-9205-c8be7c3e1baf client-trace-id
+= cd2fd219-1142-461a-b7b4-0e9c506e0eb9 rpc error: code = ResourceExhausted desc
+ = Quota limit vpc.networks.count exceeded
+Build 'yandex' errored after 2 seconds 58 milliseconds: Error creating network:
+ server-request-id = c035e0f4-e960-b8bf-a4b0-c5bd61dc085b server-trace-id = 7732
+00f7367e6ec5:ddfd944c93fa0f96:773200f7367e6ec5:1 client-request-id = cd3ae657-fd
+c2-45d1-9205-c8be7c3e1baf client-trace-id = cd2fd219-1142-461a-b7b4-0e9c506e0eb9
+ rpc error: code = ResourceExhausted desc = Quota limit vpc.networks.count exceeded
+```
+=> Fix: remove all networks from current yandex folder
+#### Issue #2.
+```
+==> yandex: Failed to find instance ip address: instance has no one IPv4 external address
+Build 'yandex' errored after 1 minute 11 seconds: Failed to find instance ip address:
+instance has no one IPv4 external address
+```
+=> Fix: [As in packer RTFM](https://www.packer.io/docs/builders/yandex.html#use_ipv4_nat) there is a need to allow NAT to internet: switch `use_ipv4_nat` to `true`:
+```
+{
+    "builders": [
+        {
+            "type": "yandex",
+            "service_account_key_file": "/home/pbedyaev/secrets/yc/key.json",
+            "folder_id": "b1gke8b3gh5mjbpt1qsr",
+            "source_image_family": "ubuntu-1604-lts",
+            "image_name": "reddit-base-{{timestamp}}",
+            "image_family": "reddit-base",
+            "ssh_username": "ubuntu",
+            "platform_id": "standard-v1",
+            "use_ipv4_nat": "true"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "script": "scripts/install_ruby.sh",
+            "execute_command": "sudo {{.Path}}"
+        },
+        {
+            "type": "shell",
+            "script": "scripts/install_mongodb.sh",
+            "execute_command": "sudo {{.Path}}"
+        }
+    ]
+}
+```
+#### Issue #3.
+```
+    yandex: Get:1 http://security.ubuntu.com/ubuntu xenial-security InRelease [109 kB]
+    yandex: Err:2 http://mirror.yandex.ru/ubuntu xenial InRelease
+    yandex:   Could not resolve 'mirror.yandex.ru'
+    yandex: Err:3 http://mirror.yandex.ru/ubuntu xenial-updates InRelease
+    yandex:   Could not resolve 'mirror.yandex.ru'
+    yandex: Err:4 http://mirror.yandex.ru/ubuntu xenial-backports InRelease
+    yandex:   Could not resolve 'mirror.yandex.ru'
+    ...
+    ==> yandex: W: Failed to fetch http://mirror.yandex.ru/ubuntu/dists/xenial-updates/InRelease
+  Could not resolve 'mirror.yandex.ru'
+    yandex: 84 packages can be upgraded. Run 'apt list --upgradable' to see them.
+==> yandex: W: Failed to fetch http://mirror.yandex.ru/ubuntu/dists/xenial-backports/InRelease
+  Could not resolve 'mirror.yandex.ru'
+==> yandex: W: Some index files failed to download. They have been ignored,
+ or old ones used instead.
+```
+=> Fix: manually add nameserver with first script mentioned in provisioners (scripts/instal_ruby.sh):
+```
+!/usr/bin/env bash
+echo "nameserver 8.8.8.8" >> /etc/resolv.conf # added to resolve mirror.yandex.ru
+apt update
+apt install -y ruby-full ruby-bundler build-essential
+```
+#### Issue #4
+```
+==> yandex:
+==> yandex: E: Could not get lock /var/lib/dpkg/lock-frontend - open (11: Resource temporarily unavailable)
+==> yandex: E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
+```
+=> Fix: make apt processes runs sequentially (and add some beauty): \
+`install_ruby.sh`:
+```
+#!/usr/bin/env bash
+echo "####### Installing Ruby: ${0} script START"
+echo "nameserver 8.8.8.8" >> /etc/resolv.conf # added to resolve mirror.yandex.ru
+apt update && \
+apt install -y ruby-full ruby-bundler build-essential
+echo "####### Installing Ruby: ${0} script END"
+exit 0
+
+```
+`install_mongodb.sh`:
+```
+#!/usr/bin/env bash
+echo "####### Installing MongoDB: ${0} script START"
+apt-get update && \
+apt-get install apt-transport-https ca-certificates
+wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.2 multiverse" \
+ | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list
+apt-get update && \
+apt-get install -y mongodb-org
+systemctl start mongod
+systemctl enable mongod
+systemctl status mongod --no-pager
+echo "####### Installing MongoDB: ${0} script END"
+exit 0
+```
+Start VM using build image, and run app inside it:
+```
+sudo apt-get update
+sudo apt-get install -y git
+git clone -b monolith https://github.com/express42/reddit.git
+cd reddit && bundle install
+puma -d
+```
+Then go to public IP:9292 and check web availability.
+
+> Packer template for User Variables (variables.json): folder_id, source_image_family, service_account_key_file.
+##### Solution:
