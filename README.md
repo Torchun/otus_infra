@@ -234,25 +234,18 @@ instance has no one IPv4 external address
 ==> yandex: W: Some index files failed to download. They have been ignored,
  or old ones used instead.
 ```
-=> Fix: manually add nameserver with first script mentioned in provisioners (scripts/instal_ruby.sh):
-```
-!/usr/bin/env bash
-echo "nameserver 8.8.8.8" >> /etc/resolv.conf # added to resolve mirror.yandex.ru
-apt update
-apt install -y ruby-full ruby-bundler build-essential
-```
+=> Fix: manually add nameserver with first script mentioned in provisioners (scripts/install_ruby.sh), or ... see next issue.
 #### Issue #4
 ```
 ==> yandex:
 ==> yandex: E: Could not get lock /var/lib/dpkg/lock-frontend - open (11: Resource temporarily unavailable)
 ==> yandex: E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
 ```
-=> Fix: make apt processes runs sequentially (and add some beauty): \
+=> Fix: No fix. Unattended upgrades triggered as VM starts, need to wait. Add some beauty: \
 `install_ruby.sh`:
 ```
 #!/usr/bin/env bash
 echo "####### Installing Ruby: ${0} script START"
-echo "nameserver 8.8.8.8" >> /etc/resolv.conf # added to resolve mirror.yandex.ru
 apt update && \
 apt install -y ruby-full ruby-bundler build-essential
 echo "####### Installing Ruby: ${0} script END"
@@ -383,8 +376,8 @@ Add [file provisioner](https://www.packer.io/docs/provisioners/file):
         "sudo mv /tmp/puma.service /etc/systemd/system/puma.service",
         "sudo apt update && sudo apt install -y git",
         "sudo mkdir -p /server",
-        "sudo chown -R $USER:$USER /server && cd $_",
-        "git clone -b monolith https://github.com/express42/reddit.git /server",
+        "sudo chmod 777 /server && cd /server",
+        "git clone -b monolith https://github.com/express42/reddit.git",
         "cd /server/reddit && bundle install",
         "sudo systemctl daemon-reload && sudo systemctl start puma && sudo systemctl enable puma"
     ]
@@ -394,4 +387,17 @@ Add [file provisioner](https://www.packer.io/docs/provisioners/file):
 ```
 packer validate -var-file=./variables.json ./immutable.json
 packer build -var-file=./variables.json ./immutable.json
+```
+
+> Make script to start instance from custom image
+##### Solution: Put one line with YC into `create-reddit-vm.sh`:
+```
+yc compute instance create \
+	--name reddit-app \
+	--hostname reddit-app \
+	--memory=4 \
+	--create-boot-disk name=reddit-full,size=19GB,image-id=abcdefjhijklmnopqrst123 \
+	--network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4 \
+	--metadata serial-port-enable=1 \
+	--ssh-key ~/.ssh/appuser.pub
 ```
