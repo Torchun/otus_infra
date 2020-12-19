@@ -2,6 +2,6 @@
   "folder_id": "aaaabbbbccccddddeeeeffff",
   "source_image_family": "ubuntu-2004-lts",
   "disk_name": "reddit-fried",
-  "service_account_key_file": "key.json"
+  "service_account_key_file": "key.json",
   "disk_size_gb": "21"
 }
