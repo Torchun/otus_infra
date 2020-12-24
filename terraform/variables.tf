@@ -26,3 +26,8 @@ variable subnet_id {
 variable service_account_key_file {
   description = "key .json"
 }
+variable instance_count{
+  description = "Number of instances to be created"
+  # set default value to 1
+  default     = 1
+}

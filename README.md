@@ -401,3 +401,120 @@ yc compute instance create \
 	--metadata serial-port-enable=1 \
 	--ssh-key ~/.ssh/appuser.pub
 ```
+# Lecture 8, homework 6
+
+> Create LoadBalancer via terraform
+
+##### Solution
+@ lb.tf file describe [target group](https://registry.terraform.io/providers/yandex-cloud/yandex/latest/docs/resources/lb_target_group):
+```
+resource "yandex_lb_target_group" "loadbalancer" {
+  name      = "lb-group"
+  folder_id = var.folder_id
+
+  target {
+    address = yandex_compute_instance.app.network_interface.0.ip_address
+      subnet_id = var.subnet_id
+  }
+}
+```
+And describe LoadBalancer as in Terraform [docs](https://registry.terraform.io/providers/yandex-cloud/yandex/latest/docs/resources/lb_network_load_balancer):
+```
+resource "yandex_lb_network_load_balancer" "lb" {
+  name = "loadbalancer"
+  type = "external"
+
+  listener {
+    name        = "listener"
+    port        = 80
+    target_port = 9292
+
+    external_address_spec {
+      ip_version = "ipv4"
+    }
+  }
+
+  attached_target_group {
+    target_group_id = yandex_lb_target_group.loadbalancer.id
+
+    healthcheck {
+      name = "tcp"
+      tcp_options {
+        port = 9292
+      }
+    }
+  }
+}
+
+```
+Add output var to `outputs.tf`:
+```
+output "loadbalancer_ip_address" {
+  value = yandex_lb_network_load_balancer.lb.listener.*.external_address_spec[0].*.address
+}
+```
+Now `terraform plan && terraform apply -auto-approve` and check LoadBalancer IP.
+
+> Add second app instance to be accessible via LoadBalancer
+
+##### Solution
+@ `main.tf` add second instance resource:
+```
+resource "yandex_compute_instance" "app2" {
+  name = "reddit-app2"
+  ...
+}
+```
+@ `lb.tf` add reddit-app2 to yandex_lb_target_group:
+```
+  target {
+    address = yandex_compute_instance.app2.network_interface.0.ip_address
+      subnet_id = var.subnet_id
+  }
+```
+Change `outputs.tf`  to show all IPs for each app[*]:
+```
+output "external_ip_addresses_app" {
+  value = yandex_compute_instance.app[*].network_interface.0.nat_ip_address
+}
+```
+As a result, LoadBalancer should provide stable access to endpoint app regardless of [one of] instance availability.
+
+> Need to DRY Terraform config files
+
+ - add instance count variable to `variables.tf` and `terraform.tfvars`
+ - rename all app instances to be named with changing number in `main.tf`
+ - change LoadBalancer target group dynamically
+
+1. In `variables.tf` add:
+```
+variable instance_count{
+  description = "Number of instances to be created"
+  # set default value to 1
+  default     = 1
+}
+
+```
+To `terraform.tfvars` append:
+```
+instance_count           = 2
+```
+2. Change `main.tf` to create instances with [reserverd word "count" to make loop](https://www.terraform.io/docs/configuration/meta-arguments/count.html) with unique names and IPs with
+replacing `yandex_compute_instance.app.` -> `self.`:
+```
+  count = var.instance_count
+  name = "reddit-app-${instance.index}"
+  ...
+    host  = self.network_interface.0.nat_ip_address
+```
+3. Using Terraform [dynamic block](https://www.terraform.io/docs/configuration/expressions/dynamic-blocks.html) annotation, in `lb.tf` create "loop" over instances IPs to place it in "target". Previous target descriptions should be removed:
+```
+  dynamic "target" {
+    for_each = yandex_compute_instance.app.*.network_interface.0.ip_address
+    content {
+      subnet_id = var.subnet_id
+      address   = target.value
+    }
+  }
+```
+4. Double-check: `terraform plan && terraform apply -auto-approve`
