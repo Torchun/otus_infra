@@ -33,7 +33,8 @@ resource "yandex_compute_instance" "app" {
   }
   network_interface {
     # Указан id подсети default-ru-central1-a
-    subnet_id = var.subnet_id
+    # subnet_id = var.subnet_id
+    subnet_id = yandex_vpc_subnet.app-subnet.id
     nat       = true
   }
   metadata = {

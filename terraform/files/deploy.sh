@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 echo "Sleeping 30s until unattended upgrades finished"
-sleep 30
+sleep 60
 ps -ef | grep -i apt
 APP_DIR=${1:-$HOME}
 sudo apt-get install -y git
