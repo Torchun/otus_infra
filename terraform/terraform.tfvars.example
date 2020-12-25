@@ -1,0 +1,8 @@
+cloud_id                 = "asd"
+folder_id                = "qwe"
+zone                     = "ru-central1-a"
+image_id                 = "zxc"
+subnet_id                = "qaz"
+public_key_path          = "~/.ssh/ubuntu.pub"
+private_key_path         = "~/.ssh/ubuntu"
+service_account_key_file = "terraform_key.json"

@@ -17,6 +17,14 @@
     "provisioners": [
         {
             "type": "shell",
+            "inline": [
+		"echo 'Waiting while unattended upgrades will do their daily work (triggered right after VM start'",
+		"sleep 30",
+		"sudo ps -ef | grep -i apt"
+	    ]
+        },
+        {
+            "type": "shell",
             "script": "scripts/install_ruby.sh",
             "execute_command": "sudo {{.Path}}"
         },
