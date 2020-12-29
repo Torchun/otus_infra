@@ -518,3 +518,12 @@ replacing `yandex_compute_instance.app.` -> `self.`:
   }
 ```
 4. Double-check: `terraform plan && terraform apply -auto-approve`
+
+# Lecture 9, homework 7
+
+> Perform steps in PDF to play with resource dependencies
+
+##### Solution
+As described
+
+>
