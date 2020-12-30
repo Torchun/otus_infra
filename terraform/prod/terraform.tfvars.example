@@ -1,0 +1,11 @@
+cloud_id                 = "abc"
+folder_id                = "def"
+zone                     = "ru-central1-a"
+image_id                 = "hig"
+subnet_id                = "klm"
+public_key_path          = "~/.ssh/appuser.pub"
+private_key_path         = "~/.ssh/appuser"
+service_account_key_file = "/path/to/service-user-key.json"
+instance_count           = 1
+app_disk_image           = "reddit-app-base"
+db_disk_image            = "reddit-db-base"

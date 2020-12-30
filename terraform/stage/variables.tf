@@ -39,14 +39,3 @@ variable db_disk_image {
   description = "Disk image for reddit db"
   default     = "fd8gulo0dtv9uu8oqhoi"
 }
-
-### Add S3 creds here
-variable yabucket_key_id {
-  description = "key_id for yandex s3"
-}
-variable yabucket_secret {
-  description = "secret for yandex s3"
-}
-variable bucket_name {
-  description = "Yandex bucket name"
-}

@@ -518,3 +518,370 @@ replacing `yandex_compute_instance.app.` -> `self.`:
   }
 ```
 4. Double-check: `terraform plan && terraform apply -auto-approve`
+
+# Lecture 9, homework 7
+
+> Perform steps in PDF to play with resource dependencies
+
+##### Solution
+As described
+
+> Split one image to two: ubuntu16.json to app.json + db.json
+##### Solution
+```
+cd ../packer
+cp ubuntu16.json app.json
+cp ubuntu16.json db.json
+```
+Fix `app.json` and `db.json` to contain only relevant part of provisioners, and after build packer images:
+`app.json`:
+```
+            "image_name": "reddit-app-base-{{timestamp}}",
+            "image_family": "reddit-app-base",
+...
+        {
+            "type": "shell",
+            "script": "scripts/install_ruby.sh",
+            "execute_command": "sudo {{.Path}}"
+        }
+
+
+```
+`db.json`:
+```
+            "image_name": "reddit-db-base-{{timestamp}}",
+            "image_family": "reddit-db-base",
+...
+        {
+            "type": "shell",
+            "script": "scripts/install_mongodb.sh",
+            "execute_command": "sudo {{.Path}}"
+        }
+
+```
+Now build images:
+```
+packer validate -var-file=./variables.json ./app.json
+packer build -var-file=./variables.json ./app.json
+packer validate -var-file=./variables.json ./db.json
+packer build -var-file=./variables.json ./db.json
+```
+> Split one main.tf to two: app.tf and db.tf
+##### Solution
+1. Append to `variables.tf`:
+```
+variable app_disk_image {
+  description = "Disk image for reddit app"
+  default = "reddit-app-base"
+}
+variable db_disk_image {
+  description = "Disk image for reddit db"
+  default = "reddit-db-base"
+}
+```
+2. Append to `terraform.tfvars`:
+```
+app_disk_image            = "reddit-app-base" # change to your fd8gulo0dtv9uu8oqhoi
+db_disk_image             = "reddit-db-base" # change to your fd8olmief7lme71b4ud5
+```
+3. `app.tf`:
+```
+resource "yandex_compute_instance" "app" {
+  name = "reddit-app"
+
+  labels = {
+    tags = "reddit-app"
+  }
+  resources {
+    core_fraction = 5
+    cores  = 2
+    memory = 2
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = var.app_disk_image
+    }
+  }
+
+  network_interface {
+    subnet_id = yandex_vpc_subnet.app-subnet.id
+    nat = true
+  }
+
+  metadata = {
+  ssh-keys = "ubuntu:${file(var.public_key_path)}"
+  }
+}
+```
+`db.tf`:
+```
+resource "yandex_compute_instance" "db" {
+  name = "reddit-db"
+  labels = {
+    tags = "reddit-db"
+  }
+
+  resources {
+    core_fraction = 5
+    cores  = 2
+    memory = 2
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = var.db_disk_image
+    }
+  }
+
+  network_interface {
+    subnet_id = yandex_vpc_subnet.app-subnet.id
+    nat = true
+  }
+
+  metadata = {
+  ssh-keys = "ubuntu:${file(var.public_key_path)}"
+  }
+}
+```
+`vpc.tf`:
+```
+resource "yandex_vpc_network" "app-network" {
+  name = "reddit-app-network"
+}
+
+resource "yandex_vpc_subnet" "app-subnet" {
+  name           = "reddit-app-subnet"
+  zone           = "ru-central1-a"
+  network_id     = "${yandex_vpc_network.app-network.id}"
+  v4_cidr_blocks = ["192.168.10.0/24"]
+}
+```
+Append to `outputs.tf`:
+```
+output "external_ip_address_app" {
+  value = yandex_compute_instance.app.network_interface.0.nat_ip_address
+}
+output "external_ip_address_db" {
+  value = yandex_compute_instance.db.network_interface.0.nat_ip_address
+}
+```
+> Use modules
+##### Solution:
+As described in PDF. Be careful and use `var.subnet_id` where needed!
+
+`terraform destroy` after check
+
+> Reuse modules in "Stage" and "Prod" envirinments
+##### Solution:
+As described in PDF. Check:
+```
+cd stage
+terraform fmt
+terraform init
+terraform plan
+terraform apply
+terraform destroy
+
+cd prod
+terraform fmt
+terraform init
+terraform plan
+terraform apply
+terraform destroy
+```
+> Starred task #1: Store terraform.tfstate in remote backend (yandex.cloud s3)
+##### Solution:
+1. Check if you have service account @ yc:
+```
+yc iam service-account list --folder-id=<your_infra_folder> # odejnmett8ttu9pds437
+```
+2. Bucket used to store tfstate:
+ - should be created before `terraform apply` inside any of `modules` directory
+ - should be the same for each directory inside `modules`
+ - should be destroyed after usage on `terraform destroy`
+So there is a need to create `*.tf` with `variables.tf` and `terraform.tfvars`:
+3. First, [generate one-time secret and key](https://cloud.yandex.ru/docs/iam/operations/sa/create-access-key) with `yc iam access-key list --service-account-name terraform --folder-id=b1gke8b3gh5mjbpt1asr`:
+ - `key_id: IsIs0huFkJF5PGIfxGUc`
+ - `secret: CGh9qIjFdPNU6Kd7GYq3d1IWLALpOYazCj0sXgQ3`
+
+@ terraform' root directory:
+
+Copy from [prod|stage] and append to `variables.ft`:
+```
+### Add S3 creds here
+variable yabucket_key_id {
+  description = "key_id for yandex s3"
+}
+variable yabucket_secret {
+  description = "secret for yandex s3"
+}
+variable bucket_name {
+  description = "Yandex bucket name"
+}
+```
+Copy from [prod|stage] and append to `terraform.tfvars`:
+```
+yabucket_key_id          = "IsIs0huFkJF5PGIfxGUc"
+yabucket_secret          = "CGh9qIjFdPNU6Kd7GYq3d1IWLALpOYazCj0sXgQ3"
+bucket_name              = "terraform-2"
+```
+Create `yandex_bucket.tf` as described [here](https://registry.terraform.io/providers/yandex-cloud/yandex/latest/docs/resources/storage_bucket) and [here](https://cloud.yandex.ru/docs/solutions/infrastructure-management/terraform-state-storage):
+```
+provider "yandex" {
+  version                  = "~> 0.35.0"
+  service_account_key_file = var.service_account_key_file
+  cloud_id                 = var.cloud_id
+  folder_id                = var.folder_id
+  zone                     = var.zone
+}
+
+resource "yandex_storage_bucket" "tfstate" {
+  bucket        = var.bucket_name
+  access_key    = var.yabucket_key_id
+  secret_key    = var.yabucket_secret
+  force_destroy = "true"
+}
+```
+Now test if bucket being created: `terraform plan` and if Ok, `terraform apply`
+
+Place `backend.tf` in each of [prod|stage] [with content](https://cloud.yandex.com/docs/solutions/infrastructure-management/terraform-state-storage):
+```
+terraform {
+  backend "s3" {
+    endpoint   = "storage.yandexcloud.net"
+    bucket   = "<bucket name>"
+    region     = "us-east-1"
+    key = "<path to the state file in the bucket>/<state file name>.tfstate"
+    access_key = "<static key identifier>"
+    secret_key = "<secret key>"
+
+    skip_region_validation      = true
+    skip_credentials_validation = true
+  }
+}
+```
+E.g. for prod (same content for stage):
+```
+terraform {
+  backend "s3" {
+    endpoint   = "storage.yandexcloud.net"
+    bucket     = "terraform-2"
+    region     = "ru-central1-a"
+    key        = "terraform.tfstate"
+    access_key = "IsIs0huFkJF5PGIfxGUc"
+    secret_key = "CGh9qIjFdPNU6Kd7GYq3d1IWLALpOYazCj0sXgQ3"
+
+
+    skip_region_validation      = true
+    skip_credentials_validation = true
+   }
+}
+
+```
+Don't forget co copy to [prod|stage].
+
+> Add provisioners to [prod|stage] to run app as supposed.
+##### Solution: add files and provisioners to modules [app]
+1. `mkdir -p modules/app/files; mkdir -p modules/db/files`
+2. `cp files/puma.service modules/app/files/puma.service`
+3. Insert to puma.service:
+```
+...
+[Service]
+Type=simple
+User=ubuntu
+Environment=DATABASE_URL=${DB_IPADDR}
+...
+```
+4. Add provisioner to [app] main.tf:
+```
+  connection {
+    type  = "ssh"
+    host  = yandex_compute_instance.app.network_interface[0].nat_ip_address
+    user  = "ubuntu"
+    agent = false
+    private_key = file(var.private_key_path)
+  }
+  provisioner "file" {
+  # need to describe in variables.tf and get from DB instance
+    content     = templatefile("${path.module}/files/puma.service", { DB_IPADDR = var.db_ipaddr})
+    destination = "/tmp/puma.service"
+  }
+  provisioner "remote-exec" {
+    script = "${path.module}/files/deploy.sh"
+  }
+```
+5. Describe DB_IPADDR in `variables.tf`:
+```
+variable db_ipaddr {
+  description = "Database IP address"
+}
+```
+In [prod|stage] `main.tf`:
+```
+module "app" {
+  source          = "../modules/app"
+  public_key_path = var.public_key_path
+  app_disk_image  = var.app_disk_image
+  subnet_id       = var.subnet_id
+  private_key_path = var.private_key_path
+  db_ipaddr       = module.db.internal_ip_address_db
+
+}
+```
+In [modules] `db/outputs.tf`:
+```
+output "internal_ip_address_db" {
+  value = yandex_compute_instance.db.network_interface.0.ip_address
+}
+```
+Try to apply. Should be ok.
+##### Issue #1: Web check to app IP shows there is no access to MongoDB.
+=> Fix: need to specify IP on which MongoDB should start.
+1. Create [MongoDB config file](https://docs.mongodb.com/manual/reference/configuration-options/) in modules/db/files/mongod.conf:
+```
+systemLog:
+  destination: file
+  path: "/var/log/mongodb/mongod.log"
+  logAppend: true
+storage:
+  dbPath: /var/lib/mongodb
+  journal:
+    enabled: true
+net:
+  bindIp: ${db_ipaddr}
+  port: 27017
+```
+2. Place restarting script to [db] module to modules/db/files/deploy.sh:
+```
+#!/usr/bin/env bash
+
+sudo mv -f /tmp/mongod.conf /etc/mongod.conf
+sudo systemctl restart mongod
+```
+3. Add provisioner to [db] instance in modules/db/main.tf:
+```
+...
+  connection {
+    type  = "ssh"
+    host  = yandex_compute_instance.db.network_interface[0].nat_ip_address
+    user  = "ubuntu"
+    agent = false
+    # путь до приватного ключа
+    private_key = file(var.private_key_path)
+  }
+  provisioner "file" {
+    content     = templatefile("${path.module}/files/mongod.conf", { db_ipaddr = yandex_compute_instance.db.network_interface.0.ip_address})
+    destination = "/tmp/mongod.conf"
+  }
+  provisioner "remote-exec" {
+    script = "${path.module}/files/deploy.sh"
+  }
+...
+```
+Now check:
+ - `terraform destroy`
+ - `terraform plan`
+ - `terraform apply`
+Go to app IP:9292 to be sure everything working.
