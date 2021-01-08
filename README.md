@@ -885,3 +885,106 @@ Now check:
  - `terraform plan`
  - `terraform apply`
 Go to app IP:9292 to be sure everything working.
+
+# Lecture 10, homework 8
+
+> Perform steps in PDF to play with resource dependencies
+
+##### Solution
+As described
+
+> Make inventory.json dynamic
+
+##### Solution
+Using [dynamic inventory description](https://nklya.medium.com/%D0%B4%D0%B8%D0%BD%D0%B0%D0%BC%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%BE%D0%B5-%D0%B8%D0%BD%D0%B2%D0%B5%D0%BD%D1%82%D0%BE%D1%80%D0%B8-%D0%B2-ansible-9ee880d540d6) there is a need to create special script and use it as part of `ansible` commands, e.g. described in `ansible.cfg`.
+At first step, create empty file with `touch inventory.sh`.
+
+According to [inventory scripts guide](https://docs.ansible.com/ansible/latest/dev_guide/developing_inventory.html#developing-inventory-scripts), inventory script should accept `--list` and `--host` args. `--host` allowed to return empty json. So basically there is a need to create inventory script which accept `--list` arg and return json to STDOut. This script should be mentioned in `ansible.cfg`:
+```
+[defaults]
+inventory = ./inventory.py
+...
+
+[inventory]
+enable_plugins = script
+```
+
+Need to get names and IPs for running instances:
+```
+$ yc compute instances list
++----------------------+------------+---------------+---------+----------------+-------------+
+|          ID          |    NAME    |    ZONE ID    | STATUS  |  EXTERNAL IP   | INTERNAL IP |
++----------------------+------------+---------------+---------+----------------+-------------+
+| fhmgve9uhhothfn8uqh6 | reddit-app | ru-central1-a | RUNNING | 84.201.173.174 | 10.130.0.11 |
+| fhmohhoj9gb1r92chh54 | reddit-db  | ru-central1-a | RUNNING | 84.201.173.51  | 10.130.0.15 |
++----------------------+------------+---------------+---------+----------------+-------------+
+
+$ yc compute instances list | grep "|" | grep -v "STATUS" | awk -F\| '{print $3}'
+ reddit-app
+ reddit-db
+
+yc compute instances list | grep "|" | grep -v "STATUS" | awk -F\| '{print $6}'
+ 84.201.173.174
+ 84.201.173.51
+
+```
+And place it into Python script:
+```
+#!/usr/bin/env python3
+import sys
+import subprocess
+import json
+
+# set default STDout
+if len(sys.argv) > 1:
+    if sys.argv[1] == "--host":
+        print('{"_meta": {"hostvars": {}}}')
+        sys.exit()
+    if sys.argv[1] != "--list":
+        print('{}')
+        sys.exit()
+else:
+    print("--list | --host | ...")
+    sys.exit(99)
+
+result = subprocess.run(['yc','compute', 'instances', 'list'], stdout=subprocess.PIPE).stdout.decode('utf-8')
+
+# keep only instance lines
+instance_line = []
+for line in result.rstrip('\n').split("\n"):
+    if "|" in line and "STATUS" not in line:
+        instance_line.append(line)
+
+# making list of instances
+instance = []
+for j in instance_line:
+    j = j.split()
+    while "|" in j: j.remove("|")
+    instance.append({"host": j[1], "ip": j[4]})
+
+# creating groups
+all_group = []
+app_group = []
+db_group = []
+for i in instance:
+    if "-app" in i["host"]:
+        app_group.append(i["ip"])
+    if "-db" in i["host"]:
+        db_group.append(i["ip"])
+    all_group.append(i["ip"])
+_meta = {"hostvars": {}}
+
+# fullfil response:
+response = {}
+response["app"] = {"hosts": app_group}
+response["db"] = {"hosts": db_group}
+response["all"] = {"hosts": all_group}
+response["_meta"] = {"hosts": _meta}
+
+print(json.dumps(response, sort_keys=True, indent=4))
+sys.exit(0)
+
+```
+And place script output to json file `./inventory.py --list > inventory.json`
+
+Run it as `ansible all -m ping`. Success!
