@@ -32,11 +32,12 @@ resource "yandex_compute_instance" "db" {
     # путь до приватного ключа
     private_key = file(var.private_key_path)
   }
-  provisioner "file" {
-    content     = templatefile("${path.module}/files/mongod.conf", { db_ipaddr = yandex_compute_instance.db.network_interface.0.ip_address})
-    destination = "/tmp/mongod.conf"
-  }
-  provisioner "remote-exec" {
-    script = "${path.module}/files/deploy.sh"
-  }
+# As required by ansible-2 task, disable/comment provisioners:
+#  provisioner "file" {
+#    content     = templatefile("${path.module}/files/mongod.conf", { db_ipaddr = yandex_compute_instance.db.network_interface.0.ip_address})
+#    destination = "/tmp/mongod.conf"
+#  }
+#  provisioner "remote-exec" {
+#    script = "${path.module}/files/deploy.sh"
+#  }
 }
