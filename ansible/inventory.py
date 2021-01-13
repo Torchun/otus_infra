@@ -44,8 +44,8 @@ _meta = {"hostvars": {}}
 
 # fullfil response:
 response = {}
-response["app"] = {"hosts": app_group}
-response["db"] = {"hosts": db_group}
+response["app"] = {"hosts": app_group, "vars":{"db_ipaddr": db_group[0]}}
+response["db"] = {"hosts": db_group, "vars":{"db_ipaddr": db_group[0]}}
 response["all"] = {"hosts": all_group}
 response["_meta"] = {"hosts": _meta}
 
