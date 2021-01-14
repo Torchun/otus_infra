@@ -988,3 +988,46 @@ sys.exit(0)
 And place script output to json file `./inventory.py --list > inventory.json`
 
 Run it as `ansible all -m ping`. Success!
+
+# Lecture 11, homework 9
+
+> Instance config management with Ansible
+##### Solution
+As described in PDF. Take into account that `puma` installed with `bundle install` _after_ `git clone`. Simplest way is to make next change in `site.yml` after splitting __reddit_app2.yml__ into three files __app.yml, db.yml, deploy.yml__:
+```
+---
+- import_playbook: db.yml
+- import_playbook: deploy.yml # <-- this goes first to install puma
+- import_playbook: app.yml
+```
+
+> Dynamic inventory
+##### Solution
+Re-use inventory.py from previous HW with modification: need to pass `db_ipaddr` to ansble' YAML:
+1. Pass additional var to selected group of instances in `inventory.py`:
+```
+...
+response["app"] = {"hosts": app_group, "vars":{"db_ipaddr": db_group[0]}}
+response["db"] = {"hosts": db_group, "vars":{"db_ipaddr": db_group[0]}}
+...
+```
+2. Change vars section in `app.yml`:
+```
+  vars:
+#   db_host: 84.201.173.51
+   db_host: "{{ db_ipaddr }}"
+```
+3. Don't forget to change `ansible.cfg` to use proper inventory (static or script):
+```
+[defaults]
+#inventory = ./inventory
+inventory = ./inventory.py
+remote_user = ubuntu
+private_key_file = ~/.ssh/ubuntu
+host_key_checking = False
+retry_files_enabled = False
+
+[inventory]
+enable_plugins = script
+```
+Check with `ansible-playbook site.yml --check` and re-run without `--check` if fails: puma may be not installed.
