@@ -1031,3 +1031,14 @@ retry_files_enabled = False
 enable_plugins = script
 ```
 Check with `ansible-playbook site.yml --check` and re-run without `--check` if fails: puma may be not installed.
+
+##### Hint: don't forget to add https pkgs to `packer_db.yml` to be able to get key:
+```
+  - name: install https and certs pkgs to be able to add key
+    apt:
+      name:
+        - apt-transport-https
+        - ca-certificates
+      update_cache: yes
+      state: present
+```
