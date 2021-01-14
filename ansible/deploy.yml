@@ -5,6 +5,19 @@
     - name: install git
       become: yes
       apt: name=git state=present
+      retries: 10
+      delay: 10 # in seconds
+      register: result
+      until: result is not failed
+#    - debug:
+#        msg: "{{result}}"
+#
+#        "msg": {
+#          "cache_update_time": 1609237469,
+#          "cache_updated": false,
+#          "changed": false,
+#          "failed": false
+#        }
 
     - name: Fetch the latest version of application code
       git:

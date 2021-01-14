@@ -1032,7 +1032,7 @@ enable_plugins = script
 ```
 Check with `ansible-playbook site.yml --check` and re-run without `--check` if fails: puma may be not installed.
 
-##### Hint: don't forget to add https pkgs to `packer_db.yml` to be able to get key:
+##### Hint #1: don't forget to add https pkgs to `packer_db.yml` to be able to get key:
 ```
   - name: install https and certs pkgs to be able to add key
     apt:
@@ -1041,4 +1041,24 @@ Check with `ansible-playbook site.yml --check` and re-run without `--check` if f
         - ca-certificates
       update_cache: yes
       state: present
+```
+##### Hint #2: don't forget about unattended updates after instance first start. Modify yml's, e.g. as in `deploy.yml` at first apt task:
+```
+ tasks:
+    - name: install git
+      become: yes
+      apt: name=git state=present
+      retries: 10
+      delay: 10 # in seconds
+      register: result
+      until: result is not failed
+#    - debug:
+#        msg: "{{result}}"
+#
+#        "msg": {
+#          "cache_update_time": 1609237469,
+#          "cache_updated": false,
+#          "changed": false,
+#          "failed": false
+#        }
 ```
