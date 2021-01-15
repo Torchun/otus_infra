@@ -32,11 +32,12 @@ resource "yandex_compute_instance" "app" {
     # путь до приватного ключа
     private_key = file(var.private_key_path)
   }
-  provisioner "file" {
-    content     = templatefile("${path.module}/files/puma.service", { DB_IPADDR = var.db_ipaddr})
-    destination = "/tmp/puma.service"
-  }
-  provisioner "remote-exec" {
-    script = "${path.module}/files/deploy.sh"
-  }
+# As required by ansible-2 task, disable/comment provisioners:
+#  provisioner "file" {
+#    content     = templatefile("${path.module}/files/puma.service", { DB_IPADDR = var.db_ipaddr})
+#    destination = "/tmp/puma.service"
+#  }
+#  provisioner "remote-exec" {
+#    script = "${path.module}/files/deploy.sh"
+#  }
 }
