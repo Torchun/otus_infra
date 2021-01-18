@@ -1062,3 +1062,24 @@ Check with `ansible-playbook site.yml --check` and re-run without `--check` if f
 #          "failed": false
 #        }
 ```
+
+# Lecture 12, homework 10
+
+> Refactor app.yml and db.yml to Roles
+##### Solution
+As described in PDF.
+Hint: do not use dynamic inventory right now (see starred tasks).
+
+> Configure community role
+
+As described in PDF.
+
+Hint: do not waste time on pening port 80 in Terraform - just skip that
+
+> Working with Ansible Vault
+
+As described in PDF.
+
+Hint: rebuild Terraform stage (or prod).
+
+> Travis CI for Ansible/Terraform/Packer ckeck (linters). Configuring repo's `.travis.yml`
