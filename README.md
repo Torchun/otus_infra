@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/Otus-DevOps-2020-11/Torchun_infra.svg?branch=main)](https://travis-ci.com/Otus-DevOps-2020-11/Torchun_infra)
+
 # Torchun_infra
 Torchun Infra repository
 
@@ -1074,7 +1076,7 @@ Hint: do not use dynamic inventory right now (see starred tasks).
 
 As described in PDF.
 
-Hint: do not waste time on pening port 80 in Terraform - just skip that
+Hint: do not waste time on opening port 80 in Terraform - just skip that
 
 > Working with Ansible Vault
 
@@ -1085,3 +1087,8 @@ Hint: rebuild Terraform stage (or prod).
 > Travis CI for Ansible/Terraform/Packer ckeck (linters). Configuring repo's `.travis.yml`
 
 As [described here](https://nklya.medium.com/%D0%BB%D0%BE%D0%BA%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%D0%B5-%D1%82%D0%B5%D1%81%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%B2-travisci-2b5ef9adb16e) install `trytravis` to perform tests without push to main repo. But [as said here](https://github.com/sethmlarson/trytravis) trytravis is not supported anymore. Sorry, but I will test with a lot of pushes to otus repo :)
+
+UPD: Travis CI not working at all. Will try to guess. Added commands to `.travis.yml`
+> Add badge to README.md with build status
+
+Probably won't work too. Add to first line in README.md link to image with build status [from here](https://travis-ci.com/github/Otus-DevOps-2020-11/Torchun_infra)

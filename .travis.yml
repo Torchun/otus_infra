@@ -7,6 +7,46 @@ before_install:
 - sudo apt-get install pip
 - sudo pip install ansible==2.10.3
 - sudo pip install ansible-lint
+- sudo apt-get install unzip git -y
+- wget https://releases.hashicorp.com/terraform/0.12.0/terraform_0.12.0_linux_amd64.zip
+- sudo unzip terraform_0.12.0_linux_amd64.zip -d /usr/local/bin
+- wget https://releases.hashicorp.com/packer/1.6.6/packer_1.6.6_linux_amd64.zip
+- sudo unzip -o packer_1.6.6_linux_amd64.zip -d /usr/local/bin
+- curl https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+- tflint -v
+- terraform --version
+- packer --version
+- ansible-lint --version
+- echo "Prepared to validate"
+- echo "Travis CI not working, trying to guess next commands :("
+- /usr/local/bin/packer validate -var-file=packer/variables.json.example packer/app.json
+- /usr/local/bin/packer validate -var-file=packer/variables.json.example packer/db.json
+- cd packer
+- /usr/local/bin/packer validate -var-file=variables.json.example ubuntu16.json
+- /usr/local/bin/packer validate -var-file=variables.json.example immutable.json
+- cd ../terraform/stage
+- mv backend.tf backend.tf.example
+- terraform init
+- terraform validate
+- tflint
+- cd ../prod
+- mv backend.tf backend.tf.example
+- terraform init
+- terraform validate
+- tflint
+- cd ../../ansible
+- ansible-lint playbooks/app.yml
+- ansible-lint playbooks/clone.yml
+- ansible-lint playbooks/db.yml
+- ansible-lint playbooks/deploy.yml
+- ansible-lint playbooks/packer_app.yml
+- ansible-lint playbooks/packer_db.yml
+- ansible-lint playbooks/reddit_app_multiple_plays.yml
+- ansible-lint playbooks/reddit_app_one_play.yml
+- ansible-lint playbooks/site.yml
+- ansible-lint playbooks/users.yml
+- ansible-galaxy install -r environments/stage/requirements.yml
+
 notifications:
   slack:
     rooms:
