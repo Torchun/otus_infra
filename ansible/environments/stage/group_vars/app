@@ -1,0 +1,10 @@
+# this file should not be used if inventory.py generates variable "db_host" (instead of "db_ipaddr" asin previous lab)
+# db_host: 178.154.227.64
+# db_host: "{{ db_ipaddr }}"
+nginx_sites:
+  default:
+    - listen 80
+    - server_name "reddit"
+    - location / {
+        proxy_pass http://127.0.0.1:9292;
+      }
