@@ -1186,4 +1186,22 @@ Recreate images with packer (from repo' root dir):
 packer build -var-file=./packer/variables.json ./packer/app.json
 packer build -var-file=./packer/variables.json ./packer/db.json
 ```
+ Done.
+> Star: move DB role to separate repo, attach to `prod` and `stage` envs via `requirements.yml`
+ - create new [repo](https://github.com/Torchun/otus_db_role)
+ - in new repo add to `.travis.yml` notifications:
+```
+script:
+  - echo "some checks passed"
+
+notifications:
+  slack: devops-team-otus:Wv8bMwwnJCwJhuIxP62nzipf
+```
+ - add badge to README.md from [Travis CI](https://travis-ci.com/github/Torchun/otus_db_role)
+ - add to `ansible/environments/prod/requirements.yml` & `ansible/environments/stage/requirements.yml`:
+```
+# Use DB from another repo
+- name: db
+  src: https://github.com/Torchun/otus_db_role
+```
 Done.
