@@ -2,12 +2,17 @@
 - name: install ruby
   hosts: all
   become: true
-  tasks:
-    - name: install ruby
-      apt:
-        name:
-          - ruby-full
-          - ruby-bundler
-          - build-essential
-        update_cache: yes
-        state: present
+
+  roles:
+    - app
+
+### removed
+#  tasks:
+#    - name: install ruby
+#      apt:
+#        name:
+#          - ruby-full
+#          - ruby-bundler
+#          - build-essential
+#        update_cache: yes
+#        state: present

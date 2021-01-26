@@ -1146,5 +1146,44 @@ Append to `molecule/default/tests/test_default.py`:
 def test_mongo_port(host):
     socket = host.socket('tcp://0.0.0.0:27017')
     assert socket.is_listening
-
 ```
+> Additional tasks: use Ansible roles to build images with Paker
+
+Change `packer/app.json`:
+```
+    "provisioners": [
+        {
+            "type": "ansible",
+            "playbook_file": "ansible/playbooks/packer_app.yml",
+            "extra_arguments": ["--tags","ruby"],
+            "ansible_env_vars": ["ANSIBLE_ROLES_PATH={{ pwd }}/ansible/roles"]
+        }
+    ]
+```
+And `packer/db.json`:
+```
+    "provisioners": [
+        {
+            "type": "ansible",
+            "playbook_file": "ansible/playbooks/packer_db.yml",
+            "extra_arguments": ["--tags","install"],
+            "ansible_env_vars": ["ANSIBLE_ROLES_PATH={{ pwd }}/ansible/roles"]
+        }
+    ]
+```
+Don't forget to link roles in `ansible/playbooks/packer_app.yml`:
+```
+  roles:
+    - app
+```
+and in `ansible/playbooks/packer_db.yml`:
+```
+  roles:
+    - db
+```
+Recreate images with packer (from repo' root dir):
+```
+packer build -var-file=./packer/variables.json ./packer/app.json
+packer build -var-file=./packer/variables.json ./packer/db.json
+```
+Done.

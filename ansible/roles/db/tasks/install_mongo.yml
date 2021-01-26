@@ -1,12 +1,21 @@
+- name: install https and certs pkgs to be able to add key
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+    update_cache: yes
+    state: present
+  tags: install
+
 - name: Add APT key
   apt_key:
-    url: https://www.mongodb.org/static/pgp/server-3.2.asc
+    url: https://www.mongodb.org/static/pgp/server-4.2.asc
     state: present
   tags: install
 
 - name: Add APT repository
   apt_repository:
-    repo: deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse
+    repo: deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.2 multiverse
     state: present
   tags: install
 
