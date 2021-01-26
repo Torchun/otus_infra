@@ -1138,3 +1138,13 @@ At `Vagrantfile` modify:
         }
       }
 ```
+> Additional tasks: testing if DB listens on port 27017
+
+Append to `molecule/default/tests/test_default.py`:
+```
+# check 27017 port
+def test_mongo_port(host):
+    socket = host.socket('tcp://0.0.0.0:27017')
+    assert socket.is_listening
+
+```
