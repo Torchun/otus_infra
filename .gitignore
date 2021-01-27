@@ -12,3 +12,12 @@ packer/variables.json
 *.retry
 jdauphant.nginx
 vault.key
+
+# Vagrant & Molecule
+.vagrant/
+*.log
+*.pyc
+.molecule
+.cache
+.pytest_cache
+*.yamllint

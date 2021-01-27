@@ -2,38 +2,36 @@
 - name: Install MongoDB 4.2
   hosts: all
   become: true
-  tasks:
 
-  - name: install https and certs pkgs to be able to add key
-    apt:
-      name:
-        - apt-transport-https
-        - ca-certificates
-      update_cache: yes
-      state: present
+  roles:
+    - db
 
-  - name: add key
-    apt_key:
-      url: https://www.mongodb.org/static/pgp/server-4.2.asc
-      state: present
-
-#  - name: Add APT key
+### removed
+#  - name: install https and certs pkgs to be able to add key
+#    apt:
+#      name:
+#        - apt-transport-https
+#        - ca-certificates
+#      update_cache: yes
+#      state: present
+#
+#  - name: add key
 #    apt_key:
-#      id: EA312927
-#      keyserver: keyserver.ubuntu.com
-
-  - name: Add APT repository
-    apt_repository:
-      repo: deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.2 multiverse
-      state: present
-
-  - name: Install mongodb package
-    apt:
-      update_cache: yes
-      name: mongodb-org
-      state: present
-
-  - name: Configure service supervisor
-    systemd:
-      name: mongod
-      enabled: yes
+#      url: https://www.mongodb.org/static/pgp/server-4.2.asc
+#      state: present
+#
+#  - name: Add APT repository
+#    apt_repository:
+#      repo: deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.2 multiverse
+#      state: present
+#
+#  - name: Install mongodb package
+#    apt:
+#      update_cache: yes
+#      name: mongodb-org
+#      state: present
+#
+#  - name: Configure service supervisor
+#    systemd:
+#      name: mongod
+#      enabled: yes

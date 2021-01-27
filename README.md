@@ -1092,3 +1092,116 @@ UPD: Travis CI not working at all. Will try to guess. Added commands to `.travis
 > Add badge to README.md with build status
 
 Probably won't work too. Add to first line in README.md link to image with build status [from here](https://travis-ci.com/github/Otus-DevOps-2020-11/Torchun_infra)
+
+# Lecture 13, homework 11
+
+> Install Vagrant, create Vagrantfile, run two instances on local host
+##### Solution
+As described in PDF.
+##### Hint 1:
+Do not use dynamic inventory! Need to comment `enable_plugins` @ `ansible.cfg`:
+```
+...
+[inventory]
+# enable_plugins = script
+
+```
+##### Hint 2:
+If starred task with `~/.ssh/config` has been done, remove this file, e.g. `mv ~/.ssh/config ~/.ssh/config.bckp`
+
+##### Hint 3:
+
+At `roles/db/tasks/install_mongo.yml` change APT key and update cache after adding repo:
+```
+- name: Add APT key
+  apt_key:
+    url: https://www.mongodb.org/static/pgp/server-3.2.asc
+    state: present
+  tags: install
+```
+... after adding repo ...
+```
+- name: update cache
+  apt:
+    update_cache: yes
+  tags: install
+```
+... and then install ...
+> Modify Vagrantfile to proxy nginx to 80 port
+
+At `Vagrantfile` modify:
+```
+      ansible.extra_vars = {
+        "deploy_user" => "vagrant",
+        nginx_sites: {
+          default: ["listen 80", "server_name 'reddit'", "location / {proxy_pass http://127.0.0.1:9292;}"]
+        }
+      }
+```
+> Additional tasks: testing if DB listens on port 27017
+
+Append to `molecule/default/tests/test_default.py`:
+```
+# check 27017 port
+def test_mongo_port(host):
+    socket = host.socket('tcp://0.0.0.0:27017')
+    assert socket.is_listening
+```
+> Additional tasks: use Ansible roles to build images with Paker
+
+Change `packer/app.json`:
+```
+    "provisioners": [
+        {
+            "type": "ansible",
+            "playbook_file": "ansible/playbooks/packer_app.yml",
+            "extra_arguments": ["--tags","ruby"],
+            "ansible_env_vars": ["ANSIBLE_ROLES_PATH={{ pwd }}/ansible/roles"]
+        }
+    ]
+```
+And `packer/db.json`:
+```
+    "provisioners": [
+        {
+            "type": "ansible",
+            "playbook_file": "ansible/playbooks/packer_db.yml",
+            "extra_arguments": ["--tags","install"],
+            "ansible_env_vars": ["ANSIBLE_ROLES_PATH={{ pwd }}/ansible/roles"]
+        }
+    ]
+```
+Don't forget to link roles in `ansible/playbooks/packer_app.yml`:
+```
+  roles:
+    - app
+```
+and in `ansible/playbooks/packer_db.yml`:
+```
+  roles:
+    - db
+```
+Recreate images with packer (from repo' root dir):
+```
+packer build -var-file=./packer/variables.json ./packer/app.json
+packer build -var-file=./packer/variables.json ./packer/db.json
+```
+ Done.
+> Star: move DB role to separate repo, attach to `prod` and `stage` envs via `requirements.yml`
+ - create new [repo](https://github.com/Torchun/otus_db_role)
+ - in new repo add to `.travis.yml` notifications:
+```
+script:
+  - echo "some checks passed"
+
+notifications:
+  slack: devops-team-otus:Wv8bMwwnJCwJhuIxP62nzipf
+```
+ - add badge to README.md from [Travis CI](https://travis-ci.com/github/Torchun/otus_db_role)
+ - add to `ansible/environments/prod/requirements.yml` & `ansible/environments/stage/requirements.yml`:
+```
+# Use DB from another repo
+- name: db
+  src: https://github.com/Torchun/otus_db_role
+```
+Done.
