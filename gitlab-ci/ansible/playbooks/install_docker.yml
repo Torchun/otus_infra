@@ -1,6 +1,6 @@
 ---
 - name: install docker
-  hosts: all
+  hosts: gitlab
   become: true
   tasks:
   - name: Install required system packages
@@ -15,6 +15,10 @@
       - gnupg-agent
       - software-properties-common
       - python-pip
+    retries: 10
+    delay: 10 # in seconds
+    register: result
+    until: result is not failed
 
   - name: Add Docker GPG apt Key
     apt_key:

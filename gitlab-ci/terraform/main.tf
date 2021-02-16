@@ -6,9 +6,9 @@ provider "yandex" {
   zone                     = var.zone
 }
 
+# labels with tags = "gitlab-ci" needed to generate dynamic inventory correctly
 resource "yandex_compute_instance" "gitlab" {
   name = "gitlab-ci-vm"
-
   labels = {
     tags = "gitlab-ci"
   }
