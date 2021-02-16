@@ -26,7 +26,7 @@
     ignore_errors: true
     register: runner_is_registered
   - name: Register gitlab-runner with master
-    command: gitlab-runner register --non-interactive --url "{{ gitlab_url }}" --registration-token "{{ registration_token }}" --executor docker --docker-image "{{ docker_base_image }}" --tag-list "docker_cpu"
+    command: gitlab-runner register --non-interactive --url "{{ gitlab_url }}" --registration-token "{{ registration_token }}" --executor docker --docker-image "{{ docker_base_image }}" --tag-list "docker_cpu" --locked="false" --run-untagged="true" --access-level="not_protected"
     when: runner_is_registered.rc == 1
 
 
