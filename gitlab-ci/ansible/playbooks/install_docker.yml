@@ -15,6 +15,8 @@
       - gnupg-agent
       - software-properties-common
       - python-pip
+      - nmon
+      - htop
     retries: 10
     delay: 10 # in seconds
     register: result

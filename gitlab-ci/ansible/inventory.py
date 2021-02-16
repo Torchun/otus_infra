@@ -22,15 +22,17 @@ instance_list = json.loads(result)
 # creating groups
 all_group = []
 gitlab_group = []
+gitlab_vars = {}
 for i in instance_list:
     if i["labels"]["tags"] == "gitlab-ci":
         gitlab_group.append(i["network_interfaces"][0]["primary_v4_address"]["one_to_one_nat"]["address"])
+        gitlab_vars[i["name"]] = i["network_interfaces"][0]["primary_v4_address"]["one_to_one_nat"]["address"]
     all_group.append(i["network_interfaces"][0]["primary_v4_address"]["one_to_one_nat"]["address"])
 _meta = {"hostvars": {}}
 
 # fullfil response:
 response = {}
-response["gitlab"] = {"hosts": gitlab_group, "vars":{}}
+response["gitlab"] = {"hosts": gitlab_group, "vars": gitlab_vars}
 response["all"] = {"hosts": all_group}
 response["_meta"] = {"hosts": _meta}
 
