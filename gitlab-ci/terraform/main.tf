@@ -48,7 +48,7 @@ resource "yandex_compute_instance" "gitlab" {
   }
 
   provisioner "local-exec" {
-    command = "ansible-playbook playbooks/prepare_gitlab.yml"
+    command = "ansible-playbook playbooks/setup_gitlab.yml"
     working_dir = "../ansible"
   }
 
