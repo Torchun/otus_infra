@@ -47,16 +47,16 @@ staging:
   stage: stage
   when: manual
   script:
-    - echo 'Deploy'
+    - echo 'Deploy stage'
   environment:
-  name: beta
-  url: http://beta.example.com
+    name: beta
+    url: http://beta.example.com
 
 production:
   stage: production
   when: manual
   script:
-    - echo 'Deploy'
+    - echo 'Deploy prod'
   environment:
-  name: production
-  url: http://example.com
+    name: production
+    url: http://example.com
