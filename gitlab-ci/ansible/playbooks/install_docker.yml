@@ -14,7 +14,8 @@
       - curl
       - gnupg-agent
       - software-properties-common
-      - python-pip
+      - python3.6
+      - python3-pip
       - nmon
       - htop
     retries: 10

@@ -6,28 +6,32 @@
     gitlab_url: "http://130.193.37.214/"
     # fill up manually, obtained in Web interface: Groups - Your group - Settings - CI/CD - Runners
     registration_token: "waMnNisNV1NmAfJi7sxe"
-    docker_base_image: "ubuntu:18.04"
+    # docker_base_image: "ubuntu:18.04"
+    docker_base_image: "alpine:latest"
 
   tasks:
 
-  - name: install runner
-    apt:
-      deb: https://gitlab-runner-downloads.s3.amazonaws.com/latest/deb/gitlab-runner_amd64.deb
+#  - name: install runner
+#    apt:
+#      deb: https://gitlab-runner-downloads.s3.amazonaws.com/latest/deb/gitlab-runner_amd64.deb
 
-  - name: gitlab-runner start
-    systemd:
-      name: gitlab-runner
-      state: started
+#  - name: gitlab-runner start
+#    systemd:
+#      name: gitlab-runner
+#      state: started
 
-  - name: Check if gitlab-runner is registered with master
-    command: grep -Fq "token" /etc/gitlab-runner/config.toml
-    failed_when: false
-    ignore_errors: true
-    register: runner_is_registered
+#  - name: Check if gitlab-runner is registered with master
+#    command: grep -Fq "token" /etc/gitlab-runner/config.toml
+#    failed_when: false
+#    ignore_errors: true
+#    register: runner_is_registered
+
+  - name: Start gitlab-runner
+    command: docker run -d --name gitlab-runner --restart always -v /srv/gitlabrunner/config:/etc/gitlab-runner -v /var/run/docker.sock:/var/run/docker.sock gitlab/gitlab-runner:latest
 
   - name: Register gitlab-runner with master
-    command: gitlab-runner register --non-interactive --url "{{ gitlab_url }}" --registration-token "{{ registration_token }}" --executor docker --docker-image "{{ docker_base_image }}" --tag-list "docker_cpu" --locked="false" --run-untagged="true" --access-level="not_protected"
-    when: runner_is_registered.rc == 1
+    command: docker exec -it gitlab-runner gitlab-runner register --non-interactive --url "{{ gitlab_url }}" --registration-token "{{ registration_token }}" --executor docker --docker-image "{{ docker_base_image }}" --tag-list "docker_cpu,linux,xenial,ubuntu,docker" --locked="false" --run-untagged="true" --access-level="not_protected" --name DockerRunner
+#    when: runner_is_registered.rc == 1
 
 
 #  - name: "Register runner"
