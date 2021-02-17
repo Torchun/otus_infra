@@ -3,9 +3,9 @@
   hosts: gitlab
   become: true
   vars:
-    gitlab_url: "http://130.193.37.214/"
+    gitlab_url: "http://84.252.131.146/"
     # fill up manually, obtained in Web interface: Groups - Your group - Settings - CI/CD - Runners
-    registration_token: "waMnNisNV1NmAfJi7sxe"
+    registration_token: "6jGntf6Nig7gWcRoDH2e"
     # docker_base_image: "ubuntu:18.04"
     docker_base_image: "alpine:latest"
 
