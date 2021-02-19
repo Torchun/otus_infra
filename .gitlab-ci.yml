@@ -19,7 +19,7 @@ build_job:
   image: docker:19.03.0
   variables:
     # because of docker-in-docker
-    DOCKER_HOST: tcp://localhost:2375
+    DOCKER_HOST: tcp://docker:2375
   # Added docker build
   # git commit -am "show GitLab $ENV" && git push gitlab gitlab-ci-1
   before_script:
