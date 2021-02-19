@@ -21,18 +21,16 @@ build_job:
   image: docker
   variables:
     #  because of docker-in-docker
-    # DOCKER_HOST: tcp://docker:2375
+    #  add to runner's conf: volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
     DOCKER_TLS_CERTDIR: ""
     DOCKER_DRIVER: overlay2
   # git commit -am "show GitLab $ENV" && git push gitlab gitlab-ci-1
   before_script:
-    - echo "before_script started"
-    - whoami
     - docker info
-    - echo "before_script finished"
+    - docker login -u ${docker_hub_login} -p ${docker_hub_password}
   script:
     - echo 'Building'
-    - echo $ENV
+    - echo $env
 
 #test_unit_job:
 #  stage: test
