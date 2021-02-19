@@ -21,6 +21,7 @@ build_job:
   # git commit -am "show GitLab $ENV" && git push gitlab gitlab-ci-1
   before_script:
     - docker info
+    - echo "before_script finished"
   script:
     - echo 'Building'
     - echo $ENV
