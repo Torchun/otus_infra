@@ -10,9 +10,6 @@ variables:
  DATABASE_URL: 'mongodb://mongo/user_posts'
  DOCKER_IMAGE: "torchun/otus-reddit"
 
-services:
-  - docker:19.03.0-dind
-
 before_script:
   - cd reddit
   - bundle install
@@ -22,10 +19,11 @@ build_job:
   image: docker:19.03.0
   variables:
     #  because of docker-in-docker
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_DRIVER: overlay2
-  # Added docker build
+    # DOCKER_HOST: tcp://docker:2375
+    # DOCKER_TLS_CERTDIR: ""
+    # DOCKER_DRIVER: overlay2
+  services:
+    - docker:19.03.0-dind
   # git commit -am "show GitLab $ENV" && git push gitlab gitlab-ci-1
   before_script:
     - echo "before_script started"
