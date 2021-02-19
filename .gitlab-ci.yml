@@ -19,7 +19,7 @@ before_script:
 
 build_job:
   stage: build
-  image: docker:19.03.0
+  image: docker
   variables:
     #  because of docker-in-docker
     #  DOCKER_HOST: tcp://docker:2375
