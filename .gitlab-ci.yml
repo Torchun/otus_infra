@@ -15,8 +15,11 @@ before_script:
 
 build_job:
   stage: build
+  # Added docker build
+
   script:
     - echo 'Building'
+    - echo $env
 
 #test_unit_job:
 #  stage: test
