@@ -11,7 +11,7 @@ variables:
  DOCKER_IMAGE: "torchun/otus-reddit"
 
 services:
-  - docker:dind
+  - docker:19.03.0-dind
 
 before_script:
   - cd reddit
@@ -19,7 +19,7 @@ before_script:
 
 build_job:
   stage: build
-  image: docker
+  image: docker:19.03.0
   variables:
     #  because of docker-in-docker
     #  DOCKER_HOST: tcp://docker:2375
