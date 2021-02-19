@@ -10,6 +10,9 @@ variables:
  DATABASE_URL: 'mongodb://mongo/user_posts'
  DOCKER_IMAGE: "torchun/otus-reddit"
 
+services:
+  - docker:dind
+
 before_script:
   - cd reddit
   - bundle install
