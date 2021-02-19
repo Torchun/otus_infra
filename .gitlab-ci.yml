@@ -30,7 +30,7 @@ build_job:
     - docker login -u ${docker_hub_login} -p ${docker_hub_password}
   script:
     - echo 'Building'
-    - echo $env
+    - env
 
 #test_unit_job:
 #  stage: test
