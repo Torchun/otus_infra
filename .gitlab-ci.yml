@@ -1,5 +1,4 @@
-#image: ruby:2.4.2
-image: docker
+image: ruby:2.4.2
 stages:
   - build
   - test
@@ -17,6 +16,7 @@ before_script:
 
 build_job:
   stage: build
+  image: docker:19.03.0
   # Added docker build
   # git commit -am "show GitLab $ENV" && git push gitlab gitlab-ci-1
   before_script:
