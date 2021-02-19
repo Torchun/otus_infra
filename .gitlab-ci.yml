@@ -8,6 +8,7 @@ stages:
 
 variables:
  DATABASE_URL: 'mongodb://mongo/user_posts'
+ DOCKER_IMAGE: "torchun/otus-reddit"
 
 before_script:
   - cd reddit
@@ -16,10 +17,11 @@ before_script:
 build_job:
   stage: build
   # Added docker build
-
+  before_script:
+    - docker info
   script:
     - echo 'Building'
-    - echo $env
+    - echo $ENV
 
 #test_unit_job:
 #  stage: test
