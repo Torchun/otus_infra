@@ -20,8 +20,8 @@ build_job:
     - docker:dind
   image: docker
   variables:
-    #  because of docker-in-docker
-    #  add to runner's conf: volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
+    # because of docker-in-docker
+    # add to runner's conf: volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
     DOCKER_TLS_CERTDIR: ""
     DOCKER_DRIVER: overlay2
   # git commit -am "show GitLab $ENV" && git push gitlab gitlab-ci-1
