@@ -22,12 +22,13 @@ build_job:
   image: docker:19.03.0
   variables:
     #  because of docker-in-docker
-    #  DOCKER_HOST: tcp://docker:2375
+    DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
     DOCKER_DRIVER: overlay2
   # Added docker build
   # git commit -am "show GitLab $ENV" && git push gitlab gitlab-ci-1
   before_script:
+    - echo "before_script started"
     - docker info
     - echo "before_script finished"
   script:
