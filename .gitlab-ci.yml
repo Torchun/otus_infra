@@ -31,6 +31,9 @@ build_job:
   script:
     - echo 'Building'
     - env
+    - docker build  -t ${DOCKER_IMAGE}:${CI_COMMIT_REF_NAME} -t ${DOCKER_IMAGE}:${CI_COMMIT_SHORT_SHA} ./reddit/.
+    - docker push ${DOCKER_IMAGE}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${DOCKER_IMAGE}:${CI_COMMIT_REF_NAME}
 
 #test_unit_job:
 #  stage: test
@@ -59,7 +62,27 @@ deploy_dev_job:
 
 branch review:
   stage: review
-  script: echo "Deploy to $CI_ENVIRONMENT_SLUG"
+  services:
+    - docker:dind
+  image: docker
+  variables:
+    # because of docker-in-docker
+    # add to runner's conf: volumes = ["/var/run/docker.sock:/var/run/docker.sock", "/cache"]
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_DRIVER: overlay2
+  # git commit -am "show GitLab $ENV" && git push gitlab gitlab-ci-1
+  before_script:
+    - docker info
+    - docker login -u ${docker_hub_login} -p ${docker_hub_password}
+  script:
+    - echo "Deploy to $CI_ENVIRONMENT_SLUG"
+    - docker stop $(docker ps -q -a --filter "name=review.${CI_ENVIRONMENT_SLUG}") || true
+    - docker run
+      -d
+      --name review.${CI_ENVIRONMENT_SLUG}
+      --rm
+      --network=proxy
+      ${DOCKER_IMAGE}:${CI_COMMIT_SHORT_SHA}
   environment:
     name: branch/$CI_COMMIT_REF_NAME
     url: http://$CI_ENVIRONMENT_SLUG.example.com
