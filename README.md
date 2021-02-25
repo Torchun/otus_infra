@@ -1205,3 +1205,15 @@ notifications:
   src: https://github.com/Torchun/otus_db_role
 ```
 Done.
+
+
+# Lecture 20, homework 15
+
+> GitLab auto deploy and configuration with `.gitlab-ci.yml`
+##### Solution: see ref files @ ./gitlab-ci/
+ - Terraform to create VM to host GitLab
+ - Ansible playbooks to install, configure and deploy dockerized GitLab instance
+ - Ansible playbook with static vars to set up gitlab runner
+ - inventory.py refactored to use `--format json`
+ - `.gitlab-ci.yml` configuration to run dockerized `reddit` app on envs
+ - GitLab webhooks for Slack: [https://devops-team-otus.slack.com/archives/C01GE1RDUSZ](https://devops-team-otus.slack.com/archives/C01GE1RDUSZ)

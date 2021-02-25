@@ -1,0 +1,69 @@
+---
+- name: install docker
+  hosts: gitlab
+  become: true
+  tasks:
+  - name: Install required system packages
+    apt:
+      name: "{{ item }}"
+      state: latest
+      update_cache: yes
+    loop:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - software-properties-common
+      - python3.6
+      - python3-pip
+      - nmon
+      - htop
+    retries: 10
+    delay: 10 # in seconds
+    register: result
+    until: result is not failed
+
+  - name: Add Docker GPG apt Key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Add Docker Repository
+    apt_repository:
+      repo:  deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+      state: present
+
+  - name: Update apt and install docker-ce
+    apt:
+      name: "{{ item }}"
+      state: latest
+      update_cache: yes
+    loop:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+
+  - name: Install Docker Module for Python
+    pip:
+      name: docker
+      executable: pip
+
+  - name: Enable Docker Service
+    service:
+      name: docker
+      state: started
+      enabled: yes
+
+  # sudo groupadd docker
+  - name: Create "docker" group
+    group:
+      name: docker
+      state: present
+  # sudo usermod -aG docker ubuntu
+  - name: Add users to docker group
+    user:
+      name: "{{ item }}"
+      groups: docker
+      append: yes
+    with_items:
+      - ubuntu
